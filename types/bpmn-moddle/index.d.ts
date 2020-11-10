@@ -1,6 +1,7 @@
-// Type definitions for bpmn-moddle 5.1
+// Type definitions for bpmn-moddle 7.0
 // Project: https://github.com/bpmn-io/bpmn-moddle
 // Definitions by: Hayden <https://github.com/haydos89>
+//                 Charles <https://github.com/Chaaaaaaarles>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 // TypeScript Version: 2.3
 
@@ -49,6 +50,19 @@ declare namespace BPMNModdle {
         extensionElements?: ExtensionElements;
 
         /**
+         * Get the property
+         * @param {string} propertyName Property name
+         */
+        get(propertyName: string): any;
+
+        /**
+         * Set the property of the element
+         * @param {string} propertyName Property name
+         * @param {any} value Value of the property
+         */
+        set(propertyName: string, value: any): void;
+
+        /**
          * Attributes that aren't defined by the BPMN Spec such
          * as Camunda properties
          */
@@ -58,7 +72,10 @@ declare namespace BPMNModdle {
     }
 
     // tslint:disable-next-line:no-empty-interface
-    interface RootElement extends BaseElement {}
+    interface RootElement extends BaseElement {
+        rootElements?: Array<Process | Diagram>;
+    }
+
     interface Interface extends RootElement {
         name: string;
         operations: Operation[];
@@ -918,6 +935,35 @@ declare namespace BPMNModdle {
         parseContext: any
     ) => void;
 
+    interface Reference {
+        id: string;
+        property: string;
+        element: BaseElement;
+    }
+
+    interface ParseResult {
+        elementsById: Record<string, BaseElement>;
+        references: Reference[];
+        rootElement: RootElement;
+        warnings: Error[];
+    }
+
+    type ParseError = Error[];
+
+    interface SerializationResult {
+        xml: string;
+    }
+
+    interface FromXMLOptions {
+        model?: BPMNModdle;
+        lax?: boolean;
+    }
+
+    interface ToXMLOptions {
+        format?: boolean;
+        preamble?: boolean;
+    }
+
     interface Moddle {
         /**
          * Create an instance of the specified type.
@@ -1016,50 +1062,23 @@ declare namespace BPMNModdle {
     interface BPMNModdle extends Moddle {
         /**
          * Instantiates a BPMN model tree from a given xml string.
-         *
-         * @param xmlStr
-         * XML string
-         *
-         * @param done
-         * done callback
+         * @param {string} xmlStr XML string
+         * @param {string} typeName Name of the root element
+         * @param {Option} options Options to pass to the underlying reader
          */
-        fromXML(xmlStr: string, done: ImportFn): void;
+        fromXML(xmlStr: string, typeName: string, options?: FromXMLOptions): Promise<ParseResult>;
 
         /**
          * Instantiates a BPMN model tree from a given xml string.
-         *
-         * @param xmlStr
-         * XML string
-         *
-         * @param options
-         * Options to pass to the underlying reader
-         *
-         * @param done
-         * done callback
+         * @param {string} xmlStr XML string
+         * @param {Option} options Options to pass to the underlying reader
          */
-        fromXML(xmlStr: string, options: Option, done: ImportFn): void;
+        fromXML(xmlStr: string, options?: FromXMLOptions): Promise<ParseResult>;
 
         /**
-         * Instantiates a BPMN model tree from a given xml string.
-         *
-         * @param xmlStr
-         * XML string
-         *
-         * @param typeName
-         * Name of the root element
-         *
-         * @param options
-         * Options to pass to the underlying reader
-         *
-         * @param done
-         * done callback
+         * Serializes a BPMN 2.0 object tree to XML.
          */
-        fromXML(
-            xmlStr: string,
-            typeName: string,
-            options: Option,
-            done: ImportFn
-        ): void;
+        toXML(element: RootElement, options?: ToXMLOptions): Promise<SerializationResult>;
     }
 }
 
